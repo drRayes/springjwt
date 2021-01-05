@@ -6,6 +6,13 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 
+/**
+ *<p>
+ *     Jpa configuration
+ *</p>
+ *
+ */
+
 @Configuration
 public class JpaConfig {
     @Bean
