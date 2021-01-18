@@ -29,7 +29,7 @@ public class Equip {
     private Integer minimalCount;
 
 //    @JsonBackReference
-    @OneToMany(mappedBy = "equip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "equip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Quantity> quantity = new HashSet<>();
 
     @ManyToOne

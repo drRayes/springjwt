@@ -1,4 +1,4 @@
-package com.rayes.security.service;
+package com.rayes.service;
 
 import java.util.Collection;
 import java.util.List;

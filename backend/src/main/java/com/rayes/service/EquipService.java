@@ -1,5 +1,6 @@
-package com.rayes.security.service;
+package com.rayes.service;
 
+import com.rayes.exception.EquipNotEnoughException;
 import com.rayes.model.Equip;
 import com.rayes.model.EquipWaybill;
 import com.rayes.model.Location;
@@ -9,6 +10,7 @@ import com.rayes.repository.QuantityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -26,31 +28,43 @@ public class EquipService {
         LOGGER.info("MOVE EQUIP " + equipWaybill.getEquip() + " from "
                 + equipWaybill.getSourceLocation() + " to " + equipWaybill.getDestination());
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        equipWaybill.setWaybillNumber(calendar.getTime().toString());
+        equipWaybill.setWaybillNumber(LocalDateTime.now().toString());
 
-        Equip equip = equipWaybill.getEquip();
-        HashMap<Integer, Quantity> quantityHashMap = this.prepareQuantityHashMap(equip.getQuantity());
+        Quantity quantity;
 
-        Quantity quantity = quantityHashMap.get(equipWaybill.getSourceLocation().getId());
-        if (quantity == null) {
-            equipWaybill.setSourceLocation(equipWaybill.getDestination());
-        } else {
-            quantity.setSum(quantity.getSum() - equipWaybill.getQuantity());
-            quantityRepository.save(quantity);
-        }
-
-        if (quantityHashMap.get(equipWaybill.getDestination().getId()) != null) {
-            quantity = quantityHashMap.get(equipWaybill.getDestination().getId());
-            quantity.setSum(quantity.getSum() + equipWaybill.getQuantity());
-            quantityRepository.saveAndFlush(quantity);
-        } else {
-            quantityRepository.saveAndFlush(new Quantity(equipWaybill.getQuantity(), equipWaybill.getDestination(),
+        if (equipWaybill.getEquip().getQuantity().size() < 1) {
+            LOGGER.info("!NEW QUANTITY IN DESTINATION");
+            quantityRepository.save(new Quantity(equipWaybill.getQuantity(), equipWaybill.getDestination(),
                     equipWaybill.getEquip()));
+            equipWaybill.setSourceLocation(equipWaybill.getDestination());
+            return equipWaybillRepository.save(equipWaybill).getEquip();
+        } else {
+            HashMap<Integer, Quantity> quantityHashMap = this.prepareQuantityHashMap(equipWaybill.getEquip().getQuantity());
+
+            if (equipWaybill.getSourceLocation() != null && equipWaybill.getSourceLocation().getId() != null) {
+                quantity = quantityHashMap.get(equipWaybill.getSourceLocation().getId());
+                if (quantity != null && quantity.getSum() >= equipWaybill.getQuantity()) {
+                    quantity.setSum(quantity.getSum() - equipWaybill.getQuantity());
+                    quantityRepository.save(quantity);
+                } else {
+                    throw new EquipNotEnoughException();
+                }
+            } else {
+                equipWaybill.setSourceLocation(equipWaybill.getEquip().getLocation());
+            }
+
+            if (quantityHashMap.get(equipWaybill.getDestination().getId()) != null) {
+                quantity = quantityHashMap.get(equipWaybill.getDestination().getId());
+                quantity.setSum(quantity.getSum() + equipWaybill.getQuantity());
+                quantityRepository.save(quantity);
+            } else {
+                LOGGER.info("NEW QUANTITY IN DESTINATION!");
+                quantityRepository.save(new Quantity(equipWaybill.getQuantity(), equipWaybill.getDestination(),
+                        equipWaybill.getEquip()));
+            }
         }
 
-        return equipWaybillRepository.saveAndFlush(equipWaybill).getEquip();
+        return equipWaybillRepository.save(equipWaybill).getEquip();
     }
 
     public HashMap<Integer, Quantity> prepareQuantityHashMap(Set<Quantity> quantitySet) {

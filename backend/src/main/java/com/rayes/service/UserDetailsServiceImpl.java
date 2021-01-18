@@ -1,4 +1,4 @@
-package com.rayes.security.service;
+package com.rayes.service;
 
 import com.rayes.model.User;
 import com.rayes.repository.UserRepository;
