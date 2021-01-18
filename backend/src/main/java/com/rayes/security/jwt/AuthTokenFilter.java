@@ -1,6 +1,6 @@
 package com.rayes.security.jwt;
 
-import com.rayes.security.service.UserDetailsServiceImpl;
+import com.rayes.service.UserDetailsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

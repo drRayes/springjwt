@@ -1,4 +1,4 @@
-package rayes;
+package com.rayes;
 
 import com.rayes.model.Equip;
 import com.rayes.model.EquipWaybill;
